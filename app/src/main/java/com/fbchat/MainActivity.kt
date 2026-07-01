@@ -2,6 +2,7 @@ package com.fbchat
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,11 +18,25 @@ class MainActivity : AppCompatActivity() {
     private lateinit var b: ActivityMainBinding
     private val friends = mutableListOf<FBFriend>()
     private lateinit var adapter: FriendAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         b = ActivityMainBinding.inflate(layoutInflater); setContentView(b.root)
-        val t = AccessToken.getCurrentAccessToken() ?: run { go(); return }
+        val token = AccessToken.getCurrentAccessToken() ?: run { goLogin(); return }
         setSupportActionBar(b.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(false)
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu); return true
+    }
+
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+        if (item.itemId == R.id.action_logout) {
+            LoginManager.getInstance().logOut(); goLogin(); return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
         adapter = FriendAdapter(friends) { f ->
             startActivity(Intent(this, ChatActivity::class.java).apply {
                 putExtra("friend_id", f.id); putExtra("friend_name", f.name)
@@ -29,15 +44,13 @@ class MainActivity : AppCompatActivity() {
         }
         b.friendsRecycler.layoutManager = LinearLayoutManager(this)
         b.friendsRecycler.adapter = adapter
-        load(t.token)
-        b.toolbar.setOnMenuItemClickListener {
-            if (it.itemId == 0) { LoginManager.getInstance().logOut(); go() }; false
-        }
+        loadFriends(token.token)
     }
-    private fun load(t: String) {
+
+    private fun loadFriends(token: String) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val r = Api.service.getFriends(token = t)
+                val r = Api.service.getFriends(token = token)
                 if (r.isSuccessful) {
                     val list = r.body()?.data ?: emptyList()
                     withContext(Dispatchers.Main) {
@@ -49,5 +62,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    private fun go() { startActivity(Intent(this, LoginActivity::class.java)); finish() }
+
+    private fun goLogin() { startActivity(Intent(this, LoginActivity::class.java)); finish() }
 }

@@ -16,7 +16,7 @@ class LoginActivity : AppCompatActivity() {
         b = ActivityLoginBinding.inflate(layoutInflater); setContentView(b.root)
         if (AccessToken.getCurrentAccessToken() != null) { go(); return }
         cm = CallbackManager.Factory.create()
-        b.facebookLoginButton.setPermissions(listOf("public_profile", "email", "user_friends"))
+        b.facebookLoginButton.setPermissions("public_profile", "email", "user_friends")
         b.facebookLoginButton.registerCallback(cm, object : FacebookCallback<LoginResult> {
             override fun onSuccess(r: LoginResult) { go() }
             override fun onCancel() { Toast.makeText(this@LoginActivity, "Batal", 0).show() }
