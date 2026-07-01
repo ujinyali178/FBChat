@@ -3,6 +3,7 @@ package com.fbchat
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,21 +23,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         b = ActivityMainBinding.inflate(layoutInflater); setContentView(b.root)
-        val token = AccessToken.getCurrentAccessToken() ?: run { goLogin(); return }
+        if (AccessToken.getCurrentAccessToken() == null) { goLogin(); return }
         setSupportActionBar(b.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(false)
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu); return true
-    }
-
-    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
-        if (item.itemId == R.id.action_logout) {
-            LoginManager.getInstance().logOut(); goLogin(); return true
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
         adapter = FriendAdapter(friends) { f ->
             startActivity(Intent(this, ChatActivity::class.java).apply {
                 putExtra("friend_id", f.id); putExtra("friend_name", f.name)
@@ -44,10 +32,22 @@ class MainActivity : AppCompatActivity() {
         }
         b.friendsRecycler.layoutManager = LinearLayoutManager(this)
         b.friendsRecycler.adapter = adapter
-        loadFriends(token.token)
+        loadFriends()
     }
 
-    private fun loadFriends(token: String) {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu); return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.action_logout) {
+            LoginManager.getInstance().logOut(); goLogin(); return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun loadFriends() {
+        val token = AccessToken.getCurrentAccessToken()?.token ?: return
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val r = Api.service.getFriends(token = token)
@@ -57,8 +57,10 @@ class MainActivity : AppCompatActivity() {
                         friends.clear(); friends.addAll(list); adapter.notifyDataSetChanged()
                     }
                 }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) { Toast.makeText(this@MainActivity, "Gagal load", 0).show() }
+            } catch (_: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, "Gagal load teman", 0).show()
+                }
             }
         }
     }
