@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="fb_blue">#1877F2</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="gray_light">#F0F2F5</color>
+    <color name="gray_medium">#65676B</color>
+    <color name="gray_dark">#1C1E21</color>
+    <color name="message_sent">#DCF8C6</color>
+    <color name="message_received">#FFFFFF</color>
+</resources>
